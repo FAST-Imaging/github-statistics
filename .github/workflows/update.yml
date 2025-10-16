@@ -1,0 +1,41 @@
+name: Update statistics
+on:
+  schedule:
+    - cron: '50 23 * * *' # Run at 23:50 everyday
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install requirements
+        run: pip3 install -r requirements.txt
+
+      - name: Extract data
+        run: python3 extract.py
+
+      - name: Create plots
+        run: |
+          python3 plot.py
+          python3 plot_OS.py
+          python3 plot_file_type.py
+
+      - name: Create badges
+        run: |
+          python3 create_badges.py
+
+      - name: Git commit and push
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add data/*.json
+          git add data/last_updated
+          git add plots/*.svg
+          git add badges/*.svg
+          git commit -m "Update"
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
