@@ -66,7 +66,7 @@ if os.path.exists(f'data/{year}.json'):
         data = json.load(file)
     # Get sum of all
     sum = 0
-    for date, value in data:
+    for date, value in data.items():
         sum += value
     data[date_today] = downloads_total - sum
 else:
@@ -83,7 +83,7 @@ if os.path.exists(f'data/{year}-OS.json'):
         for OS in data.keys():
             # Find sum for OS
             sum = 0
-            for date, value in data[OS]:
+            for date, value in data[OS].items():
                 sum += value
             data[OS][date_today] = downloads_per_OS[OS] - sum
 else:
@@ -102,7 +102,7 @@ if os.path.exists(f'data/{year}-file-type.json'):
         for type in data.keys():
             # Find sum for OS
             sum = 0
-            for date, value in data[type]:
+            for date, value in data[type].items():
                 sum += value
             data[type][date_today] = downloads_per_type[type] - sum
 else:
