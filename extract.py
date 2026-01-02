@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from github import Github
 
-year = str(datetime.now().year)
+current_year = datetime.now().year
 date_format = '%Y-%m-%d'
 date_today = datetime.now().strftime(date_format)
 
@@ -59,59 +59,86 @@ for release in releases:
             print(f'Error parsing file type for {asset.name}')
             continue
 
-
 # ========================> Total downloads
-if os.path.exists(f'data/{year}.json'):
-    with open(f'data/{year}.json', 'r') as file:
-        data = json.load(file)
-    # Get sum of all
-    sum = 0
-    for date, value in data.items():
-        sum += value
-    data[date_today] = downloads_total - sum
-else:
-    data = {date_today: downloads_total}
+sum = 0
+for year in range(2025, current_year+1):
+    if os.path.exists(f'data/{year}.json'):
+        with open(f'data/{year}.json', 'r') as file:
+            data = json.load(file)
+        # Get sum of all
+        for date, value in data.items():
+            sum += value
 
-with open(f'data/{year}.json', 'w') as file:
-    json.dump(data, file, indent=4)
+    if year == current_year:
+        if os.path.exists(f'data/{year}.json'):
+            data[date_today] = downloads_total - sum
+        else:
+            data = {date_today: downloads_total}
+
+        with open(f'data/{year}.json', 'w') as file:
+            json.dump(data, file, indent=4)
 
 
 # ========================> Per OS
-if os.path.exists(f'data/{year}-OS.json'):
-    with open(f'data/{year}-OS.json', 'r') as file:
-        data = json.load(file)
-        for OS in data.keys():
-            # Find sum for OS
-            sum = 0
-            for date, value in data[OS].items():
-                sum += value
-            data[OS][date_today] = downloads_per_OS[OS] - sum
-else:
-    data = {}
-    for OS in downloads_per_OS.keys():
-        data[OS] = {date_today: downloads_per_OS[OS]}
+sum = {}
+for year in range(2025, current_year + 1):
+    if os.path.exists(f'data/{year}-OS.json'):
+        with open(f'data/{year}-OS.json', 'r') as file:
+            data = json.load(file)
+            for OS in data.keys():
+                # Find sum for OS
+                if OS not in sum:
+                    sum[OS] = 0
+                for date, value in data[OS].items():
+                    sum[OS] += value
+                data[OS][date_today] = downloads_per_OS[OS] - sum[OS]
+    if year == current_year:
+        if os.path.exists(f'data/{year}-OS.json'):
+            for OS in downloads_per_OS.keys():
+                if OS in data.keys():
+                    data[OS][date_today] = downloads_per_OS[OS] - sum[OS]
+                else:
+                    data[OS] = {date_today: downloads_per_OS[OS] - sum[OS]}
+        else:
+            data = {}
+            for OS in downloads_per_OS.keys():
+                data[OS] = {date_today: downloads_per_OS[OS]}
 
-with open(f'data/{year}-OS.json', 'w') as file:
-    json.dump(data, file, indent=4)
-
+        with open(f'data/{year}-OS.json', 'w') as file:
+            json.dump(data, file, indent=4)
 
 # ========================> Per file type
-if os.path.exists(f'data/{year}-file-type.json'):
-    with open(f'data/{year}-file-type.json', 'r') as file:
-        data = json.load(file)
-        for type in data.keys():
-            # Find sum for OS
-            sum = 0
-            for date, value in data[type].items():
-                sum += value
-            data[type][date_today] = downloads_per_type[type] - sum
-else:
-    data = {}
-    for type in downloads_per_type.keys():
-        data[type] = {date_today: downloads_per_type[type]}
+sum = {}
+for year in range(2025, current_year + 1):
+    if os.path.exists(f'data/{year}-file-type.json'):
+        with open(f'data/{year}-file-type.json', 'r') as file:
+            data = json.load(file)
+            for type in data.keys():
+                # Find sum for OS
+                if type not in sum:
+                    sum[type] = 0
+                for date, value in data[type].items():
+                    sum[type] += value
+                data[type][date_today] = downloads_per_type[type] - sum[type]
+    else:
+        data = {}
+        for type in downloads_per_type.keys():
+            data[type] = {date_today: downloads_per_type[type]}
 
-with open(f'data/{year}-file-type.json', 'w') as file:
-    json.dump(data, file, indent=4)
+    if year == current_year:
+        if os.path.exists(f'data/{year}-file-type.json'):
+            for type in downloads_per_type.keys():
+                if type in data.keys():
+                    data[type][date_today] = downloads_per_type[type] - sum[type]
+                else:
+                    data[type] = {date_today: downloads_per_type[type] - sum[type]}
+        else:
+            data = {}
+            for type in downloads_per_type.keys():
+                data[type] = {date_today: downloads_per_type[type]}
+
+        with open(f'data/{year}-file-type.json', 'w') as file:
+            json.dump(data, file, indent=4)
 
 # =====================> Update last_updated file
 with open('data/last_updated', 'w') as file:
